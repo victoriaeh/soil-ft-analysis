@@ -1,10 +1,7 @@
 # transform input data: create one csv file for each site containing all
 # variables for that site - resulting in 16 new files
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
-import csv
 
 directory = "input_data"
 csv_list = [
