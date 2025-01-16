@@ -48,18 +48,18 @@ avg_subset = 'avg'
 observation_type = 'average'
 avg_df = subset_dataframes(avg_subset, data)
 
-# subset the *_obs columns into a dictionary
-obs_subset = 'obs'
-observation_type = 'observed'
-obs_df= subset_dataframes(obs_subset, data)
-
-# process avg_df for correlation matrix and export results
+# process avg_df dictionary for correlation matrix and export results
 observation_type = 'average'
 fig_dir = 'corr_matrix_figures/avg'
 get_correlation_matrix(avg_df, observation_type, avg_subset, fig_dir)
 
-# process obs_df for correlation matrix and export results
+
+# subset the *_obs columns into a dictionary
+obs_subset = 'obs'
+observation_type = 'observed'
+obs_df = subset_dataframes(obs_subset, data)
+
+# process obs_df dictionary for correlation matrix and export results
 observation_type = 'observed'
 fig_dir = 'corr_matrix_figures/obs'
 get_correlation_matrix(obs_df, observation_type, obs_subset, fig_dir)
-
