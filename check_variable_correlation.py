@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-from load_csv_files import get_csv_files, subset_dataframes
+from load_site_data import get_csv_files, subset_dataframes
 
 def get_correlation_matrix(data_subset, observation_type, subset, dir_path='./'):
     """

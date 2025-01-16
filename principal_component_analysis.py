@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import os
-from load_csv_files import get_csv_files, subset_dataframes
+from load_site_data import get_csv_files, subset_dataframes
 
 # store the csvs as dataframes in a directory named data
 directory = 'site_data'
