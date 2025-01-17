@@ -36,17 +36,55 @@ obs_dict = subset_dataframes(subset, data)
 #
 #########################
 
-# select observational or daily average dictionary
-working_dict = avg_dict
+# # select observational or daily average dictionary
+# working_dict = avg_dict
 
-# center and scale data for PCA
-scaled_data = StandardScaler().fit_transform(working_dict)
-# create PCA object
-pca = PCA()
-# calculate loading scores and variation for each principle component
-pca.fit(scaled_data)
-# generate coords for PCA graph based on loading scores and scaled data
-pca_data = pca.transform(scaled_data)
+def scale_and_center_dfs(dictionary):
+    """
+    Scale and center each dataframe in a dictionary using StandardScaler
+    """
+    scaled_dict = {}
+
+    for site_name, dataframe in dictionary.items():
+        scaler = StandardScaler()
+        scaled_array = scaler.fit_transform(dataframe)
+
+        # convert array back to dataframe
+        scaled_dataframe = pd.DataFrame(scaled_array, 
+                                        columns=dataframe.columns,
+                                        index=dataframe.index)
+        
+        # store scaled dataframe in new dictionary
+        scaled_dict[site_name] = scaled_dataframe
+    
+    return scaled_dict
+
+def apply_pca(scaled_dict):
+    """
+    Create PCA object, calculate loading scores and varation for each
+    principle component, and generate coords for PCA graph based on loading
+    scores and scaled data
+    """
+    pca_dict = {}
+
+    for site_name, dataframe in scaled_dict.itmes():
+        pca = PCA()
+        pca.fit(dataframe)
+        pca_data = pca.transform(dataframe)
+        pca_dict[site_name] = pca_data
+
+    return pca_dict
+
+
+
+# # center and scale data for PCA
+# scaled_data = StandardScaler().fit_transform(working_dict)
+# # create PCA object
+# pca = PCA()
+# # calculate loading scores and variation for each principle component
+# pca.fit(scaled_data)
+# # generate coords for PCA graph based on loading scores and scaled data
+# pca_data = pca.transform(scaled_data)
 
 #########################
 #
