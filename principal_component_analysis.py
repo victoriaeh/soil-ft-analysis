@@ -53,7 +53,7 @@ def scale_and_center_dfs(dictionary):
     
     return scaled_dict
 
-def apply_pca(scaled_dict, data_type, scree_path, pca_path):
+def apply_pca(scaled_dict, data_type):
     """
     1. Apply PCA to dataframes in dictionary
     2. Calculate loading scores and varation for each principle component
@@ -65,13 +65,19 @@ def apply_pca(scaled_dict, data_type, scree_path, pca_path):
     # create PCA object
     pca = PCA()
     
+    # initialize dictionary to hold PCA results
     pca_dict = {}
 
-    # create directories for output figures if they don't already exist
-    if not os.path.exists(scree_path):
-        os.makedirs(scree_path)
-    if not os.path.exists(pca_path):
-        os.makedirs(pca_path)
+    # define output data paths
+    fig_dir = 'figures'
+    scree_path = f'{fig_dir}/{data_type}/scree_plot'
+    pca_path = f'{fig_dir}/{data_type}/pca_plot'
+    load_score_path = f'loading_scores/{data_type}'
+
+    # create directories for output data if they don't already exist
+    if not os.path.exists(scree_path): os.makedirs(scree_path)
+    if not os.path.exists(pca_path): os.makedirs(pca_path)
+    if not os.path.exists(load_score_path): os.makedirs(load_score_path)
 
     # loop through dataframes in the dictionary for steps 1 through 6
     for site_name, scaled_data in scaled_dict.items():
@@ -106,26 +112,29 @@ def apply_pca(scaled_dict, data_type, scree_path, pca_path):
                     bbox_inches='tight', pad_inches=0.1, dpi=300)
         plt.close(fig)
 
-        # # examine loading scores
-        # loading_scores = pd.Series(pca.components_[0], index=)
-        # sorted_loading_scores = loading_scores.abs().sort_values(ascending=
-        #                                                          False)
-        # top_5_variables = sorted_loading_scores[0:5].index.values
-        # # export top_5_variables
+        # examine loading scores
+        loading_scores = pd.DataFrame(pca.components_, 
+                                      columns=scaled_data.columns)
+        
+        # determine the relation of each PC to original variables
+        for i in range(loading_scores.shape[0]):
+            sorted_loading_scores = loading_scores.iloc[
+                i].abs().sort_values(ascending=False)
+
+        loading_scores.insert(0, 'principal_component', [
+            'PC' + str(i+1) for i in range(loading_scores.shape[0])])
+        
+        load_score_csv = f'loading_scores_{site_name}_{data_type}.csv'
+        loading_scores.to_csv(f'{load_score_path}/{load_score_csv}', 
+                              index=False)
 
 
 # process PCA for daily average dataframes
 scaled_dict = scale_and_center_dfs(avg_dict)
 data_type = 'average'
-# define output figure paths
-scree_path = 'figures/average/scree_plot'
-pca_path = 'figures/average/pca_plot'
-apply_pca(scaled_dict, data_type, scree_path, pca_path)
+apply_pca(scaled_dict, data_type)
 
 # process PCA for am observed dataframes
 scaled_dict = scale_and_center_dfs(obs_dict)
 data_type = 'observed'
-# define output figure paths
-scree_path = 'figures/observed/scree_plot'
-pca_path = 'figures/observed/pca_plot'
-apply_pca(scaled_dict, data_type, scree_path, pca_path)
+apply_pca(scaled_dict, data_type)
