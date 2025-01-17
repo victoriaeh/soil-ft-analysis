@@ -1,7 +1,12 @@
-# transform input data: create one csv file for each site containing all
-# variables for that site - resulting in 16 new files
 import pandas as pd
 import os
+
+#########################
+#
+# Transform input data: create one csv file for each site containing all
+# variables for that site, drop empty columns
+# - results in 16 new csv files named by the associated snotel site
+#########################
 
 directory = "input_data"
 csv_list = [
@@ -52,6 +57,8 @@ for df_name, df in df_dict.items():
             # the temp_df column based on the original df name
             temp_df = df[[column]].rename(columns={column: 
                                                           f"{df_name}"})
+            # drop columns with all NaN values
+            temp_df = temp_df.dropna(axis=1, how='all')
 
             # create a dataframe if site_dict does not yet have one for 
             # the selected column

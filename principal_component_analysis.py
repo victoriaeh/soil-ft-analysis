@@ -30,15 +30,6 @@ observation_type = 'observed'
 # am observed snotel data
 obs_dict = subset_dataframes(subset, data)
 
-#########################
-#
-# Perform PCA on the data
-#
-#########################
-
-# # select observational or daily average dictionary
-# working_dict = avg_dict
-
 def scale_and_center_dfs(dictionary):
     """
     Scale and center each dataframe in a dictionary using StandardScaler
@@ -46,84 +37,95 @@ def scale_and_center_dfs(dictionary):
     scaled_dict = {}
 
     for site_name, dataframe in dictionary.items():
+        # drop rows with NAN values
+        dataframe_clean = dataframe.dropna()
+
         scaler = StandardScaler()
-        scaled_array = scaler.fit_transform(dataframe)
+        scaled_array = scaler.fit_transform(dataframe_clean)
 
         # convert array back to dataframe
         scaled_dataframe = pd.DataFrame(scaled_array, 
                                         columns=dataframe.columns,
-                                        index=dataframe.index)
+                                        index=dataframe_clean.index)
         
         # store scaled dataframe in new dictionary
         scaled_dict[site_name] = scaled_dataframe
     
     return scaled_dict
 
-def apply_pca(scaled_dict):
+def apply_pca(scaled_dict, data_type, scree_path, pca_path):
     """
-    Create PCA object, calculate loading scores and varation for each
-    principle component, and generate coords for PCA graph based on loading
-    scores and scaled data
+    1. Apply PCA to dataframes in dictionary
+    2. Calculate loading scores and varation for each principle component
+    3. Generate coords for PCA graph based on loading scores and scaled data
+    4. Draw scree plot
+    5. Draw PCA plot
+    6. Examine loading scores
     """
+    # create PCA object
+    pca = PCA()
+    
     pca_dict = {}
 
-    for site_name, dataframe in scaled_dict.itmes():
-        pca = PCA()
-        pca.fit(dataframe)
-        pca_data = pca.transform(dataframe)
+    # create directories for output figures if they don't already exist
+    if not os.path.exists(scree_path):
+        os.makedirs(scree_path)
+    if not os.path.exists(pca_path):
+        os.makedirs(pca_path)
+
+    # loop through dataframes in the dictionary for steps 1 through 6
+    for site_name, scaled_data in scaled_dict.items():
+        # apply PCA
+        pca.fit(scaled_data)
+        # get PCA coordinates for scaled_data
+        pca_data = pca.transform(scaled_data)
         pca_dict[site_name] = pca_data
 
-    return pca_dict
+        # generate scree plot
+        per_var = np.round(pca.explained_variance_ratio_* 100, decimals=1)
+        labels = ['PCA' + str(x) for x in range(1, len(per_var)+1)]
+        
+        fig = plt.figure(figsize=(4, 3))
+        plt.bar(x=range(1, len(per_var)+1), height=per_var, tick_label=labels)
+        plt.ylabel('Percentage of Explained Variance')
+        plt.xlabel('Principle Component')
+        plt.title(f'{site_name.title()} {data_type.title()} Scree Plot')
+        plt.savefig(f'{scree_path}/scree_plot_{site_name}_{data_type}.png', 
+                    bbox_inches='tight', pad_inches=0.1, dpi=300)
+        plt.close(fig)
+
+        # draw PCA plot
+        pca_df = pd.DataFrame(pca_data, index=scaled_data.index, 
+                              columns=labels)
+        fig = plt.figure(figsize=(4, 3))
+        plt.scatter(pca_df.PCA1, pca_df.PCA2)
+        plt.title(f'{site_name.title()} {data_type.title()} PCA Graph')
+        plt.xlabel(f'PC1: {per_var[0]}%')
+        plt.ylabel(f'PC2: {per_var[1]}%')
+        plt.savefig(f'{pca_path}/pca_graph_{site_name}_{data_type}.png', 
+                    bbox_inches='tight', pad_inches=0.1, dpi=300)
+        plt.close(fig)
+
+        # # examine loading scores
+        # loading_scores = pd.Series(pca.components_[0], index=)
+        # sorted_loading_scores = loading_scores.abs().sort_values(ascending=
+        #                                                          False)
+        # top_5_variables = sorted_loading_scores[0:5].index.values
+        # # export top_5_variables
 
 
+# process PCA for daily average dataframes
+scaled_dict = scale_and_center_dfs(avg_dict)
+data_type = 'average'
+# define output figure paths
+scree_path = 'figures/average/scree_plot'
+pca_path = 'figures/average/pca_plot'
+apply_pca(scaled_dict, data_type, scree_path, pca_path)
 
-# # center and scale data for PCA
-# scaled_data = StandardScaler().fit_transform(working_dict)
-# # create PCA object
-# pca = PCA()
-# # calculate loading scores and variation for each principle component
-# pca.fit(scaled_data)
-# # generate coords for PCA graph based on loading scores and scaled data
-# pca_data = pca.transform(scaled_data)
-
-#########################
-#
-# Draw Scree plots and PCA plots
-#
-#########################
-
-# generate scree plot
-per_var = np.round(pca.explained_variance_ratio_* 100, decimals=1)
-labels = ['PC' + str(x) for x in range(1, len(per_var)+1)]
-
-plt.bar(x=range(1, len(per_var)+1), height=per_var, tick_label=labels)
-plt.ylabel('Percentage fo Explained Variance')
-plt.xlabel('Principle Component')
-plt.title('Scree Plot')
-plt.show()
-
-# # draw PCA plot where rows have sample labels and columns have PC labels
-# pca_df = pd.DataFrame(pca_data, index=[], columns=labels)
-
-# plt.scatter(pca_df.PC1, pca_df.PC2)
-# plt.title('My PCA Graph')
-# plt.xlabel('PC1 - {0}%'.format(per_var[0]))
-# plt.ylabel('PC2 - {0}%'.format(per_var[0]))
-# # add sample names to graph
-# for sample in pca_df.index:
-#     plt.annotate(sample, (pca_df.PC1.loc[sample], pca_df.PC2.loc[sample]))
-# plt.show()
-
-#########################
-#
-# Determine which variables had the biggest influence on PCA
-#
-#########################
-
-# # examine loading scores
-# loading_scores = pd.Series(pca.components_[0], index=)
-# sorted_loading_scores = loading_scores.abs().sort_values(ascending=False)
-
-# top_5_variables = sorted_loading_scores[0:5].index.values
-
-# print(loading_scores[top_5_variables])
+# process PCA for am observed dataframes
+scaled_dict = scale_and_center_dfs(obs_dict)
+data_type = 'observed'
+# define output figure paths
+scree_path = 'figures/observed/scree_plot'
+pca_path = 'figures/observed/pca_plot'
+apply_pca(scaled_dict, data_type, scree_path, pca_path)

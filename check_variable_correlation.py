@@ -1,11 +1,15 @@
-# check if variables intended for multiple regression analysis
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 from load_site_data import get_csv_files, subset_dataframes
+
+#########################
+#
+# check if variables are correlated or colinear
+#
+#########################
 
 def get_correlation_matrix(data_subset, observation_type, subset, dir_path='./'):
     """
@@ -42,6 +46,7 @@ def get_correlation_matrix(data_subset, observation_type, subset, dir_path='./')
 # store the csvs as dataframes in a directory
 directory = 'site_data'
 data = get_csv_files(directory)
+
 
 # subset the *_avg columns into a dictionary 
 avg_subset = 'avg'
